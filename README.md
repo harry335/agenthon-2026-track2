@@ -8,6 +8,7 @@
 - [實驗紀錄](docs/EXPERIMENT_LOG.md)
 - [決策紀錄](docs/DECISION_LOG.md)
 - [提交檢查表](docs/SUBMISSION_CHECKLIST.md)
+- [官方規格摘要](docs/OFFICIAL_REQUIREMENTS.md)
 - [協作與 PR 規範](CONTRIBUTING.md)
 
 ## GitHub 工作流程
