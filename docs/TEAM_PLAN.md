@@ -1,17 +1,19 @@
 # Track 2 三人團隊總計畫
 
-## 0. 尚待 PM 確認
+## 0. 已確認時程與尚待決策
 
 | 項目 | 目前狀態 |
 |---|---|
 | 成員姓名與專長 | TBD |
-| Development 開始／截止 | TBD |
-| Final 截止 | TBD |
+| Registration | 2026-08-17～09-28 |
+| Development | 2026-08-28～09-28 |
+| Final | 2026-09-29～10-12；每 track 一次 final submission |
+| Verification | 2026-10-13～10-25 |
 | 每週可投入時數 | TBD |
 | 可用本機／雲端 GPU | TBD |
-| Submission category | 暫定 `api`，確認後更新 |
+| Submission category | TBD：`api`／`byo-small`／`byo-large` |
 
-若期限尚未公布，以「距離 Final 的週數」管理里程碑；不得把未定日期假裝成已確認資訊。
+官方規格最後核對日期為 2026-08-30；詳細來源與實作合約見 [OFFICIAL_REQUIREMENTS.md](OFFICIAL_REQUIREMENTS.md)。
 
 ## 1. 專案目標
 
@@ -29,13 +31,15 @@
 ## 2. 不可違反的硬性規格
 
 - Container 必須接受 `forecast --panels ... --text ... --asof ... --out ...`。
+- Image 必須包含 `LABEL qfbench2.interface_version="2.0"`，並以 Python `>=3.13` 對齊官方 package。
 - 必須產生 `forecast.parquet`、`forecast_meta.json`、非空白的 `forecast_rationale.md`。
 - `forecast_meta.json` 使用 `unit_id`，不是 `card_id`。
 - 最少 200 draws；預設 500；F4 預設 1,000，除非效能測試顯示無法負擔。
 - Joint cards 的同一 draw 必須包含全部 targets，不可逐資產獨立抽樣後任意拼接。
-- 正式環境不得擷取外部市場／新聞資料；模型 API 只能走主辦方 audited proxy。
+- 正式環境不得擷取外部市場／新聞資料；只能呼叫主辦方 audited proxy 上的 house model endpoint，第三方 vendor API 不可用。
 - 模型必須能在沒有實體 GPU 的 worker 上正常啟動或安全 fallback。
 - `qfbench2-common` 固定為官方要求版本；變更前必須留下決策紀錄。
+- 每張卡上限為 16 vCPU、128 GB、1,800 秒，但 Development 全 submission 只有 12 小時，設計目標應低於約 419 秒／unit。
 
 ## 3. 三人角色與責任
 
@@ -85,11 +89,12 @@ Text Reasoner 不直接寫最終 forecast，先輸出可測試的結構化訊號
 
 ## 5. 里程碑與退出條件
 
-### M0 — 團隊啟動（1 天）
+### M0 — 團隊啟動（第 0～2 天）
 
 - 填完成員、期限、時數與硬體資訊。
 - 三人確認角色與 review 規則。
 - 官方 repository 固定到明確 commit/tag。
+- 固定 Python 3.13、`qfbench2-common@v2.3.1` 與 Docker interface version 2.0。
 - 建立 GitHub Project：Backlog / This Week / In Progress / Review / Done。
 
 退出條件：每個 P0 工作都有 owner、deadline 與驗收條件。
@@ -217,4 +222,3 @@ Text Reasoner 不直接寫最終 forecast，先輸出可測試的結構化訊號
 - 實驗有 commit、設定、runtime、結果與結論。
 - 不降低既有 gates pass rate。
 - 若改動 forecast distribution，已跑 numeric-only/full-text 對照。
-
