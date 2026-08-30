@@ -1,0 +1,36 @@
+name: Bug 回報
+description: 回報可重現的錯誤或規格不符
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 問題描述
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 重現方式
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 預期結果
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 環境與版本
+      description: 包含 Git commit、Python、Docker、作業系統與相關設定。
+    validations:
+      required: true
+

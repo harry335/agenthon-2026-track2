@@ -1,0 +1,31 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  repository-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check required repository files
+        run: |
+          test -s README.md
+          test -s CONTRIBUTING.md
+          test -s docs/TEAM_PLAN.md
+          test -s docs/DECISION_LOG.md
+          test -s docs/EXPERIMENT_LOG.md
+          test -s docs/SUBMISSION_CHECKLIST.md
+      - name: Reject committed secrets files
+        run: |
+          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$'; then
+            echo 'Do not commit environment or secret files.'
+            exit 1
+          fi
+

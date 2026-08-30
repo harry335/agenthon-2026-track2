@@ -1,0 +1,44 @@
+name: 工作項目
+description: 建立具有明確輸入、輸出與驗收方式的工作項目
+title: "[Task] "
+labels:
+  - task
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: 目標
+      description: 這張 Issue 要解決什麼問題？
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: 輸入與依賴
+      description: 需要哪些資料、介面或前置工作？
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: 預期輸出
+      description: 要交付哪些程式、檔案、API 或文件？
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 驗收標準
+      description: 請列出可操作、可判定通過或失敗的條件。
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: input
+    id: due
+    attributes:
+      label: 目標日期
+      placeholder: YYYY-MM-DD
+    validations:
+      required: true
+
