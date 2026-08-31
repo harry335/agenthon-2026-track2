@@ -14,11 +14,8 @@
 
 1. [官方規格與要求](docs/OFFICIAL_REQUIREMENTS.md)
 2. [計畫表](docs/TEAM_PLAN.md)
-3. [提交前檢查表](docs/SUBMISSION_CHECKLIST.md)
-
-
-- [實驗紀錄](docs/EXPERIMENT_LOG.md)
-- [決策紀錄](docs/DECISION_LOG.md)
+3. [實驗紀錄](docs/EXPERIMENT_LOG.md)
+4. [決策紀錄](docs/DECISION_LOG.md)
 
 ## GitHub 怎麼用？
 
