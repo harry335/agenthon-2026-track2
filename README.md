@@ -19,7 +19,6 @@
 
 - [實驗紀錄](docs/EXPERIMENT_LOG.md)
 - [決策紀錄](docs/DECISION_LOG.md)
-- [GitHub 協作規則](CONTRIBUTING.md)
 
 ## GitHub 怎麼用？
 
