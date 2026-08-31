@@ -7,7 +7,7 @@
 ##
 
 1. [官方規格](docs/OFFICIAL_REQUIREMENTS.md)
-2. [團隊計畫](docs/TEAM_PLAN.md)
+2. [計畫表](docs/TEAM_PLAN.md)
 3. [提交前檢查表](docs/SUBMISSION_CHECKLIST.md)
 
 
