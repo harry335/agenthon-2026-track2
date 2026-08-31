@@ -17,6 +17,8 @@
 3. [實驗紀錄](docs/EXPERIMENT_LOG.md)
 4. [決策紀錄](docs/DECISION_LOG.md)
 
+[Google Docs](https://docs.google.com/document/d/1Y1cxSoJsbYRPkekZNRJAFV4GG9iLbOiScF6T-jPHbdU/edit?usp=sharing)
+
 # 官方網址
 
 1. [Agenthon](https://www.agenthon.net)
