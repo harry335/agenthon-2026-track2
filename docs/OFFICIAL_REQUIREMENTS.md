@@ -1,138 +1,76 @@
-# Agenthon 2026 Track 2 官方規格摘要
+# Track 2 官方規格｜白話短版
 
-> 最後核對：2026-08-30（Asia/Taipei）
-> 官方 Track 2 source commit：`639614b61db1952834787d2d6b3632330bdf2a19`（2026-08-29）
+> 最後核對：2026-08-30
+> 官方版本：`639614b61db1952834787d2d6b3632330bdf2a19`
 
-本文件濃縮實作、測試與提交時會直接影響成敗的規格。若本文件與官方來源衝突，以官方網站、規則及 public repository 的最新版本為準。
+## 一句話說明
 
-## 1. 官方來源
+我們要做一個預測程式：讀取過去的金融數字和當時已公開的文字資料，產生許多種可能的未來結果。
 
-- [Agenthon 2026 Protocol 與時間表](https://www.agenthon.net/#protocol)
-- [Track 2 public repository](https://github.com/Agenthon-2026/track2-forecasting-public)
-- [Track 2 participant guide](https://github.com/Agenthon-2026/track2-forecasting-public/blob/main/README.md)
-- [Submission CLI contract](https://github.com/Agenthon-2026/track2-forecasting-public/blob/main/SUBMISSION_CLI.md)
-- [F1–F4 card families](https://github.com/Agenthon-2026/track2-forecasting-public/blob/main/docs/CATEGORIES.md)
-- [Scoring concepts](https://github.com/Agenthon-2026/track2-forecasting-public/blob/main/docs/CONCEPTS.md)
+主辦方會把程式放進 Docker，在不能自由上網的環境中測試。
 
-## 2. 競賽時間
+## 現在要做什麼？
 
-| 階段 | 日期 | 意義 |
-|---|---|---|
-| Registration | 2026-08-17～09-28 | 最晚 09-28 完成團隊註冊 |
-| Development | 2026-08-28～09-28 | Public practice、迭代與 validation leaderboard |
-| Final | 2026-09-29～10-12 | 每個參賽 track 只有一次 final submission；sealed units |
-| Verification | 2026-10-13～10-25 | 主辦方以新 seed 重跑頂尖 submission 並檢查可重現性 |
-| NeurIPS | 2026-12-09～12-13 | Atlanta workshop；確切 session 待公告 |
+依照這個順序做，不要先急著研究複雜模型：
 
-團隊可有 1～3 人。只有已註冊團隊能取得 starter package、提交與進入 leaderboard。
+1. 用 Python 跑通官方範例。
+2. 確認範例能產生三個必要檔案。
+3. 用官方工具檢查，讓四項基本檢查全部通過。
+4. 修正官方 Docker 範例缺少的套件。
+5. 在完全斷網的情況下再跑一次 Docker。
+6. 最後才開始改進預測方法。
 
-## 3. 任務與評分
+第一階段的完成標準是：另一台電腦重新下載專案後，只看 README 就能成功跑完。
 
-Track 2 使用數值 time-series panels 加上截至 `asof` 的 frozen text corpus，輸出未來結果的完整機率分布，以 Monte Carlo draws 表示。
+## 程式會收到什麼？
 
-多 cell 卡的 composite：
+- `/input/panels`：過去的金融數字。
+- `/input/text`：新聞、央行文件等文字資料。
+- `--asof`：資料截止日。只能使用這一天以前的資訊。
 
-```text
-S = 0.5 × marginal CRPS + 0.3 × joint variogram + 0.2 × tail penalty
-```
-
-分數越低越好。單 cell 卡沒有 joint term，因此權重改為 `0.714 × CRPS + 0.286 × tail`。
-
-- 每張卡的 normalized text-blind baseline 為 `1.0`。
-- 每張卡等權重。
-- 漏跑、錯誤或 inadmissible 的卡記 `4.0`，沒有值得跳過的卡。
-- Text uplift 是科學診斷，不是獨立的排名項目；仍應固定執行 full-text／text-ablated 對照。
-
-### Card families
-
-| Family | 核心問題 | 主要壓力 |
-|---|---|---|
-| F1 Continuation-with-context | 文字能否替熟悉序列增加增量訊號 | Marginal CRPS |
-| F2 Text-cued regime shift | 文字能否在數字改變前辨識 regime shift | CRPS + tail |
-| F3 Cross-asset reasoning | 文字能否推導相關市場並維持 joint dependence | Joint variogram |
-| F4 Tail/shock-from-text | 文字能否提前反映 shock 與 fat tails | Tail penalty |
-
-Public repository 有 103 個 practice units：F1 23、F2 27、F3 22、F4 31。Practice units 沒有 realized outcomes，因此本機只能驗證執行與 g0–g3，不能算正式 CRPS composite。
-
-## 4. Docker 與 CLI 合約
-
-Image 必須實作：
+主辦方會執行：
 
 ```bash
 forecast \
-  --panels /input/panels/ \
-  --text /input/text/ \
+  --panels /input/panels \
+  --text /input/text \
   --asof YYYY-MM-DD \
   --out /output/forecast.parquet
 ```
 
-Harness 會將整個 unit directory 以唯讀方式掛載到 `/input`，而不是分別掛載 panels 與 text。Image 必須：
+所以 Docker 必須看得懂 `forecast` 這個指令，成功時要正常結束。
 
-- 接受 `forecast` 作為 image 後的第一個參數，或將它做成 `PATH` 上的 executable。
-- 成功時 exit code 為 `0`。
-- 包含 `LABEL qfbench2.interface_version="2.0"`。
-- 只讀 `/input`，只寫 `/output`。
-- 能在沒有實體 GPU 的 worker 啟動或安全 fallback。
-- 使用 Python `>=3.13`，與官方 package 及 CI 對齊。
+## 程式要交出什麼？
 
-## 5. 必要輸出
+三個檔案缺一不可：
 
-三個檔案必須位於同一個 output directory：
-
-### `forecast.parquet`
-
-| 欄位 | 型別 | 規則 |
-|---|---|---|
-| `draw` | int32 | 從 0 開始的 sample index |
-| `asset` | string | 必須完全符合 card target asset ID |
-| `horizon` | int32 | business days，不是 calendar days |
-| `value` | float64 | 使用 card 指定單位，不可有 NaN／Inf |
-
-- 至少 200 draws；一般建議 500+，F4 建議 1,000+。
-- F3／F4 的同一 draw 必須包含所有 target assets 與 horizons。
-- 不可逐資產獨立抽樣後任意拼接成 joint forecast。
-
-### `forecast_meta.json`
-
-至少包含：
-
-```json
-{
-  "unit_id": "exact-card-task-id",
-  "asof": "YYYY-MM-DD",
-  "asset_ids": ["..."],
-  "horizons": [21],
-  "representation": "samples",
-  "n_draws": 500
-}
-```
-
-`unit_id` 與 `asof` 必須完全符合 `card.toml`。Metadata 使用 `unit_id`，不可寫成 scorer report 使用的 `card_id`。
-
-### `forecast_rationale.md`
-
-- 必須存在且不可空白，否則 g1 失敗。
-- 不會進入數值評分，但會供人工 review。
-- 應記錄 numeric anchor、文字造成的調整、scale／shape、依據文件與日期，以及最後 adjustment ledger。
-
-## 6. Admissibility gates
-
-只有通過 g0–g3 才會計算排名分數：
-
-| Gate | 重點 |
+| 檔案 | 用途 |
 |---|---|
-| g0 integrity | image、manifest、執行與完整性 |
-| g1 schema | parquet schema、metadata、非空白 rationale |
-| g2 cutoff/resource | `asof`、text timestamps、網路與資源限制 |
-| g3 domain semantics | draw 數、完整 cells、非退化分布、joint／tail 合理性 |
+| `forecast.parquet` | 多次抽樣的預測數字 |
+| `forecast_meta.json` | 題目、日期、資產、預測天數與抽樣次數 |
+| `forecast_rationale.md` | 用白話簡述預測理由，不可空白 |
 
-本機 smoke scorer：
+重要規則：
 
-```bash
-qfbench2-smoke units/t2-EXAMPLE-ust-curve-1m/ output/ --track forecasting
-```
+- 至少產生 200 組預測；一般先用 500 組。
+- 每個資產和預測天數都不能漏。
+- `forecast_meta.json` 要寫 `unit_id`，不能寫成 `card_id`。
+- 不可出現空值、無限大或完全一樣的假抽樣。
 
-或使用官方 scorer：
+## 怎樣才算通過？
+
+官方有四項基本檢查，文件中會看到 `g0`～`g3`：
+
+| 名稱 | 白話意思 |
+|---|---|
+| g0 | 程式和檔案是否完整、能否正常執行 |
+| g1 | 三個輸出檔的格式是否正確 |
+| g2 | 有沒有偷用未來資料、超時或超出資源 |
+| g3 | 預測數量是否足夠、內容是否合理且沒有漏項 |
+
+任何一項失敗，這題就不會正常計分。
+
+本機檢查指令：
 
 ```bash
 python scoring/scoring.py score \
@@ -140,72 +78,70 @@ python scoring/scoring.py score \
   --forecast output/forecast.parquet
 ```
 
-沒有 `--realized` 時只會回報 gates，不會產生可比較的正式分數。
+公開資料沒有真正答案，所以本機只能確認格式和流程，不能知道正式分數。
 
-## 7. 網路與模型
+## 分數怎麼看？
 
-Official scoring 使用 `restricted` network，沒有 open internet。唯一允許的 egress 是 organizer audited proxy 上的 house model endpoint。
+不用先理解公式，只要記得：
 
-- `api.openai.com`、Anthropic、Google 等 vendor API 都會被拒絕。
-- Harness 不提供、也沒有機制傳入 participant API key。
-- Runtime 由環境提供 `HTTP_PROXY`、`HTTPS_PROXY`、`NO_PROXY`、`MODEL_ENDPOINT`、`MODEL_NAME`、`QFBENCH_NETWORK`；不可 hardcode proxy host。
-- 所有 model calls 必須停用 vendor-side web search、code execution 與 retrieval。
-- 本機 structural smoke run 使用 `--network=none`。
+- 分數越低越好。
+- 不只看猜得準不準，也看不確定範圍是否合理。
+- 多個資產一起預測時，也會看它們是否合理地一起漲跌。
+- 極端事件不能完全忽略。
+- 每題都算分；漏跑或出錯會記 `4.0`，也就是最差分數。
+- 官方純數字模型的基準是 `1.0`，目標是低於它。
 
-Submission category 必須三選一：
+官方共有 103 題練習題。先追求 103 題全部能完成，再追求更好的分數。
 
-| Category | 模型方式 |
-|---|---|
-| `api` | 使用 organizer house endpoint；CPU tier |
-| `byo-small` | image 內自帶約 ≤8B 權重；CPU 或 small GPU |
-| `byo-large` | image 內自帶大型權重；80GB-class GPU tier |
+## 網路和模型限制
 
-所有 category 共用同一 leaderboard。官方 provisional API budget 為每 unit 1,000,000 input + 100,000 output tokens；在正式公告前不得當成最終值。
+正式測試不能自由上網：
 
-## 8. 資源與時間
+- 不可抓即時行情、新聞或其他外部資料。
+- 不可直接呼叫 OpenAI、Anthropic 或 Google API。
+- 只能使用主辦方提供的模型服務，或把自己的模型放進 Docker。
+- 本機測試要使用 `--network=none`，確認斷網也能完成基本流程。
 
-每張 Track 2 card 目前宣告：
+目前先不要決定要用多大的模型。先讓沒有模型 API 的基本版本也能完成預測，之後再選方案。
 
-- 16 vCPU
-- 128 GB memory
-- `gpu = true`，但不保證 worker 一定掛載實體 GPU
-- 1,800 秒 per-unit ceiling
-- Development 全 submission 43,200 秒（12 小時）
-- Final／Verification 全 submission 86,400 秒（24 小時）
+## 環境規格
 
-103 units 在 Development 平均只有約 419 秒／unit。必須依 phase budget 設計，不可把 1,800 秒當成每題可用預算。Docker image cold pull 也計時，因此 image 大小會直接消耗預算。
+先固定下面幾件事：
 
-## 9. 可重現性與 leakage
+- Python 3.13 或更新版本。
+- `qfbench2-common` 固定使用 `v2.3.1`。
+- Docker 加上 `qfbench2.interface_version="2.0"`。
+- 沒有 GPU 時，程式也必須能啟動或改用簡單版本。
 
-- 模型版本與 bundled weights revision 必須固定。
-- 揭露每個模型的 training cutoff。
-- API 支援時固定 temperature 與 seed；讀取 harness 提供的 `QFBENCH_SEED`。
-- 固定 Docker image digest。
-- Panel 與 text 皆不可使用 `asof` 後資料。
-- 推論時不可下載市場資料、新聞或其他外部資料。
-- 不可從其他 practice unit 把特定 target answer 帶入本 unit；practice data 可訓練／調參，但不可建立跨 unit 答案查找表。
+官方每題最多提供 16 顆 CPU、128 GB 記憶體和 30 分鐘，但整批 103 題只有 12 小時。平均每題大約只能用 7 分鐘，所以不能讓每題都跑滿 30 分鐘。
 
-## 10. 官方 reference 的已知注意事項
+## 官方範例目前的問題
 
-截至上述 source commit：
-
-- Python CLI 可在本機跑通 exemplar，產生三個檔案並通過 g0–g3。
-- 官方 root Dockerfile 可 build，但仍未安裝 `qfbench2-common`，container 執行時會出現 `ModuleNotFoundError`；自己的 Dockerfile 必須補上固定版本。
-- 必須固定：
+官方 Python 範例可以跑，但官方 Dockerfile 少裝了一個必要套件。自己的 Dockerfile 必須加入：
 
 ```text
 qfbench2-common @ git+https://github.com/Agenthon-2026/Agenthon2026-public.git@v2.3.1#subdirectory=common
 ```
 
-- 不可安裝 branch head；`v2.3.1` 是目前官方指定、包含必要 contracts 的版本。
+不要直接從會變動的 branch 安裝。
 
-## 11. 第一個可驗收目標
+## 重要日期
 
-在模型研究開始前，先完成：
+| 日期 | 要做什麼 |
+|---|---|
+| 2026-09-28 前 | 完成報名與開發階段 |
+| 2026-09-29～10-12 | Final；每個參賽項目只有一次正式提交 |
+| 2026-10-13～10-25 | 主辦方重新執行並檢查能否重現 |
 
-1. 固定官方 source commit 與 `qfbench2-common@v2.3.1`。
-2. 使用 Python 3.13 跑通官方 exemplar。
-3. 修正自己的 Docker image，加入 interface label 與 shared toolkit。
-4. 使用單一 `/input` 唯讀 mount 執行 `--network=none`。
-5. 產生三個必要輸出並讓 g0–g3 全部 pass。
-6. 記錄 image digest、runtime、memory、seed 與完整命令。
+## 不可踩的紅線
+
+1. 不可使用 `--asof` 日期之後的資料。
+2. 不可在正式執行時上網找答案。
+3. 不可從其他練習題查出這一題的特定答案。
+4. 必須固定套件、模型版本和隨機種子，讓結果可以重跑。
+
+## 官方來源
+
+- [Agenthon 2026 Protocol](https://www.agenthon.net/#protocol)
+- [Track 2 官方 repository](https://github.com/Agenthon-2026/track2-forecasting-public)
+- [完整 CLI 規格](https://github.com/Agenthon-2026/track2-forecasting-public/blob/main/SUBMISSION_CLI.md)
